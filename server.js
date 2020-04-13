@@ -4,8 +4,8 @@ const MongoClient = require("mongodb").MongoClient;
 const app = express();
 var fs = require("fs");
 const cors = require("cors");
-var privateKey = fs.readFileSync("server.key", "utf8");
-var certificate = fs.readFileSync("server.cert", "utf8");
+var privateKey = fs.readFileSync("privkey.pem", "utf8");
+var certificate = fs.readFileSync("fullchain.pem", "utf8");
 
 const port = 21212;
 var whitelist = [
