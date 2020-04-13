@@ -1,8 +1,11 @@
 const express = require("express");
-const http = require("http");
+var https = require("https");
 const MongoClient = require("mongodb").MongoClient;
 const app = express();
+var fs = require("fs");
 const cors = require("cors");
+var privateKey = fs.readFileSync("server.key", "utf8");
+var certificate = fs.readFileSync("server.cert", "utf8");
 
 const port = 21212;
 var whitelist = [
@@ -22,7 +25,9 @@ var corsOptions = {
 app.use(cors());
 app.use(express.json());
 
-const server = http.createServer(app).listen(port, function() {
+var credentials = { key: privateKey, cert: certificate };
+
+const server = https.createServer(credentials, app).listen(port, function() {
   console.log(`Server listening on port ${port}!`); // The server object listens on port 3000
 });
 
