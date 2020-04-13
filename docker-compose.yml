@@ -1,0 +1,11 @@
+version: "3"
+services:
+  node:
+    restart: always
+    command: node server.js
+    container_name: remote-server
+    build: .
+    ports:
+      - 21212:21212
+    volumes:
+      - .:/usr/src/app
