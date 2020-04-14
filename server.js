@@ -32,7 +32,7 @@ const server = https.createServer(credentials, app).listen(port, function() {
 });
 
 const url = "mongodb://root:Canygra01@144.202.41.172:27017/?authSource=admin";
-const dbName = "remote";
+const dbName = "mrguinas";
 let col = null;
 
 MongoClient.connect(
@@ -51,13 +51,17 @@ MongoClient.connect(
   }
 );
 app.post("/remote", (req, res) => {
+  col = mongoClient.collection("remote");
   col.insertOne(req.body, (err, item) => {
+    if (err) res.send(400);
     res.json(req.body);
   });
 });
 
 app.get("/remote", (req, res) => {
+  col = mongoClient.collection("remote");
   col.find().toArray((err, list) => {
+    if (err) res.send(400);
     if (list.length > 0) {
       col.drop().then(() => {
         res.send(list);
@@ -65,5 +69,48 @@ app.get("/remote", (req, res) => {
     } else {
       res.send(list);
     }
+  });
+});
+
+app.post("/userDonnation", (req, res) => {
+  col = mongoClient.collection("userDonnation");
+  col.insertOne(req.body, (err, item) => {
+    if (err) res.send(400);
+    res.json(req.body);
+  });
+});
+
+app.get("/userDonnation", (req, res) => {
+  col = mongoClient.collection("userDonnation");
+  col.find().toArray((err, list) => {
+    if (err) res.send(400);
+    res.send(list);
+  });
+});
+
+app.delete("/userDonnation", (req, res) => {
+  col = mongoClient.collection("userDonnation");
+  col.deleteMany({}, (err, item) => {
+    if (err) res.send(400);
+    res.json(req.body);
+  });
+});
+
+app.post("/meta", (req, res) => {
+  col = mongoClient.collection("meta");
+  let json = req.body;
+  json.type = "meta";
+  console.log(json);
+  col.replaceOne({ type: "meta" }, json, { upsert: true }, (err, item) => {
+    if (err) res.send(400);
+    res.json(json);
+  });
+});
+
+app.get("/meta", (req, res) => {
+  col = mongoClient.collection("meta");
+  col.findOne({ type: "meta" }, (err, item) => {
+    if (err) res.send(400);
+    res.send(item);
   });
 });
