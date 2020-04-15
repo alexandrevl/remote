@@ -1,0 +1,12 @@
+deploy:
+  stage: deploy
+  image: alpine
+  before_script:
+    - apk add openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -t rsa 144.202.41.172>> ~/.ssh/known_hosts
+  script:
+    - ssh -o StrictHostKeyChecking=no root@144.202.41.172 "cd remote; docker-compose down; git pull; docker-compose up -d"
