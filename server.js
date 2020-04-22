@@ -44,25 +44,26 @@ MongoClient.connect(
   function(err, client) {
     if (err) {
       console.log(err);
+    } else {
+      mongoClient = client.db(dbName);
+      col = mongoClient.collection("remote");
+      console.log("Mongo connected");
     }
-    mongoClient = client.db(dbName);
-    col = mongoClient.collection("remote");
-    console.log("Mongo connected");
   }
 );
 app.post("/remote", (req, res) => {
   col = mongoClient.collection("remote");
   col.insertOne(req.body, (err, item) => {
-    if (err) res.send(400);
-    res.json(req.body);
+    if (err) res.sendStatus(400);
+    else res.json(req.body);
   });
 });
 
 app.get("/remote", (req, res) => {
   col = mongoClient.collection("remote");
   col.find().toArray((err, list) => {
-    if (err) res.send(400);
-    if (list.length > 0) {
+    if (err) res.sendStatus(400);
+    else if (list.length > 0) {
       col.drop().then(() => {
         res.send(list);
       });
@@ -75,25 +76,40 @@ app.get("/remote", (req, res) => {
 app.post("/userDonnation", (req, res) => {
   col = mongoClient.collection("userDonnation");
   col.insertOne(req.body, (err, item) => {
-    if (err) res.send(400);
-    res.json(req.body);
+    if (err) res.sendStatus(400);
+    else res.json(req.body);
   });
 });
 
 app.get("/userDonnation", (req, res) => {
   col = mongoClient.collection("userDonnation");
   col.find().toArray((err, list) => {
-    if (err) res.send(400);
-    res.send(list);
+    if (err) res.sendStatus(400);
+    else res.send(list);
   });
 });
 
 app.delete("/userDonnation", (req, res) => {
   col = mongoClient.collection("userDonnation");
   col.deleteMany({}, (err, item) => {
-    if (err) res.send(400);
-    res.json(req.body);
+    if (err) res.sendStatus(400);
+    else res.json(req.body);
   });
+});
+
+app.put("/meta", (req, res) => {
+  col = mongoClient.collection("meta");
+  let json = req.body;
+
+  col.updateOne(
+    { type: "meta" },
+    { $inc: { apurado: json.amount } },
+    (err, item) => {
+      //console.log(err, json.amount);
+      if (err) res.sendStatus(400);
+      else res.json(item);
+    }
+  );
 });
 
 app.post("/meta", (req, res) => {
@@ -102,15 +118,15 @@ app.post("/meta", (req, res) => {
   json.type = "meta";
   console.log(json);
   col.replaceOne({ type: "meta" }, json, { upsert: true }, (err, item) => {
-    if (err) res.send(400);
-    res.json(json);
+    if (err) res.sendStatus(400);
+    else res.json(json);
   });
 });
 
 app.get("/meta", (req, res) => {
   col = mongoClient.collection("meta");
   col.findOne({ type: "meta" }, (err, item) => {
-    if (err) res.send(400);
-    res.send(item);
+    if (err) res.sendStatus(400);
+    else res.send(item);
   });
 });
