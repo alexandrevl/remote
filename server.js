@@ -135,6 +135,11 @@ app.get("/meta", (req, res) => {
   });
 });
 
+function incRemote(msg) {
+  col = mongoClient.collection("remote");
+  col.insertOne(msg, (err, item) => {});
+}
+
 function writeInfestacao(infestacao) {
   col = mongoClient.collection("bot");
   let json = infestacao;
@@ -157,6 +162,23 @@ function getInfestacao() {
       });
   });
 }
+function getRemote() {
+  return new Promise((resolve, reject) => {
+    mongoClient
+      .collection("remote")
+      .find()
+      .toArray((err, list) => {
+        if (err) reject(err);
+        else if (list.length > 0) {
+          col.drop().then(() => {
+            resolve(list);
+          });
+        } else {
+          resolve(list);
+        }
+      });
+  });
+}
 function getBomb() {
   return new Promise((resolve, reject) => {
     mongoClient.collection("bot").findOne({ type: "bomb" }, (err, item) => {
@@ -170,6 +192,7 @@ let infestacaoControler = new Map();
 let infestacaoWatchers = new Map();
 let bombControler = new Map();
 let bombWatchers = new Map();
+let remoteWatchers = new Map();
 io.on("connection", async socket => {
   console.info(`Connected [id=${socket.id}]`);
   socket.on("setInfestacao", infestacao => {
@@ -179,12 +202,23 @@ io.on("connection", async socket => {
     writeInfestacao(infestacao);
     notifyInfestacao(infestacao);
   });
+  socket.on("addRemote", msg => {
+    console.info(`AddRemote [id=${socket.id}]`);
+    notifyRemote(msg);
+  });
   socket.on("setBomb", bomb => {
     console.info(`SetBomb [id=${socket.id}]`);
     //console.log(bomb);
     bombControler.set(socket, bomb);
     writeBomb(bomb);
     notifyBomb(bomb);
+  });
+  socket.on("registerRemoteWatcher", () => {
+    console.info(`Registered remoteWatcher [id=${socket.id}]`);
+    getRemote().then(list => {
+      socket.emit("remoteMsg", list);
+    });
+    remoteWatchers.set(socket);
   });
   socket.on("registerBombWatcher", bomb => {
     console.info(`Registered bombWatcher [id=${socket.id}]`);
@@ -220,11 +254,25 @@ function notifyInfestacao(infestacao) {
     }
   });
 }
+function notifyRemote(msg) {
+  let isRemoteConnected = false;
+  remoteWatchers.forEach((key, socket) => {
+    if (socket) {
+      //console.log("Emitting remote msg");
+      isRemoteConnected = true;
+      socket.emit("remoteMsg", [msg]);
+    }
+  });
+  if (!isRemoteConnected) {
+    incRemote(msg);
+  }
+}
 
 function disconnectClient(socket) {
   infestacaoControler.delete(socket);
   bombControler.delete(socket);
   bombWatchers.delete(socket);
   infestacaoWatchers.delete(socket);
+  remoteWatchers.delete(socket);
   console.info(`DISCONNECTED [id=${socket.id}]`);
 }
