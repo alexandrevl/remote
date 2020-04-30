@@ -136,21 +136,23 @@ app.get("/meta", (req, res) => {
 });
 
 function incRemote(msg) {
-  col = mongoClient.collection("remote");
-  col.insertOne(msg, (err, item) => {});
+  mongoClient.collection("remote").insertOne(msg, (err, item) => {});
 }
 
 function writeInfestacao(infestacao) {
-  col = mongoClient.collection("bot");
   let json = infestacao;
   json.type = "infestacao";
+  mongoClient
+    .collection("bot")
+    .replaceOne({ type: json.type }, json, { upsert: true }, (err, item) => {});
+}
+function writeBomb(bomb) {
+  let json = bomb;
+  json.type = "bomb";
   //console.log(json);
-  col.replaceOne(
-    { type: json.type },
-    json,
-    { upsert: true },
-    (err, item) => {}
-  );
+  mongoClient
+    .collection("bot")
+    .replaceOne({ type: json.type }, json, { upsert: true }, (err, item) => {});
 }
 function getInfestacao() {
   return new Promise((resolve, reject) => {
