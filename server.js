@@ -13,23 +13,23 @@ const port = 21212;
 var whitelist = [
   "http://bot.mrguinas.com.br",
   "https://bot.mrguinas.com.br",
-  "http://localhost:3000"
+  "http://localhost:3000",
 ];
 var corsOptions = {
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
-  }
+  },
 };
 app.use(cors());
 app.use(express.json());
 
 var credentials = { key: privateKey, cert: certificate };
 
-const server = https.createServer(credentials, app).listen(port, function() {
+const server = https.createServer(credentials, app).listen(port, function () {
   console.log(`Server listening on port ${port}!`); // The server object listens on port 3000
 });
 
@@ -42,9 +42,9 @@ MongoClient.connect(
   url,
   {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   },
-  function(err, client) {
+  function (err, client) {
     if (err) {
       console.log(err);
     } else {
@@ -172,9 +172,12 @@ function getRemote() {
       .toArray((err, list) => {
         if (err) reject(err);
         else if (list.length > 0) {
-          col.drop().then(() => {
-            resolve(list);
-          });
+          mongoClient
+            .collection("remote")
+            .drop()
+            .then(() => {
+              resolve(list);
+            });
         } else {
           resolve(list);
         }
@@ -195,20 +198,20 @@ let infestacaoWatchers = new Map();
 let bombControler = new Map();
 let bombWatchers = new Map();
 let remoteWatchers = new Map();
-io.on("connection", async socket => {
+io.on("connection", async (socket) => {
   console.info(`Connected [id=${socket.id}]`);
-  socket.on("setInfestacao", infestacao => {
+  socket.on("setInfestacao", (infestacao) => {
     console.info(`SetInfestacao [id=${socket.id}]`);
     //console.log(bomb);
     infestacaoControler.set(socket, infestacao);
     writeInfestacao(infestacao);
     notifyInfestacao(infestacao);
   });
-  socket.on("addRemote", msg => {
+  socket.on("addRemote", (msg) => {
     console.info(`AddRemote [id=${socket.id}]`);
     notifyRemote(msg);
   });
-  socket.on("setBomb", bomb => {
+  socket.on("setBomb", (bomb) => {
     console.info(`SetBomb [id=${socket.id}]`);
     //console.log(bomb);
     bombControler.set(socket, bomb);
@@ -217,21 +220,21 @@ io.on("connection", async socket => {
   });
   socket.on("registerRemoteWatcher", () => {
     console.info(`Registered remoteWatcher [id=${socket.id}]`);
-    getRemote().then(list => {
+    getRemote().then((list) => {
       socket.emit("remoteMsg", list);
     });
     remoteWatchers.set(socket);
   });
-  socket.on("registerBombWatcher", bomb => {
+  socket.on("registerBombWatcher", (bomb) => {
     console.info(`Registered bombWatcher [id=${socket.id}]`);
-    getBomb().then(bombMongo => {
+    getBomb().then((bombMongo) => {
       socket.emit("bomb", bombMongo);
     });
     bombWatchers.set(socket);
   });
-  socket.on("registerInfestacaoWatcher", infestacao => {
+  socket.on("registerInfestacaoWatcher", (infestacao) => {
     console.info(`Registered infestacaoWatcher [id=${socket.id}]`);
-    getInfestacao().then(infestacaoMongo => {
+    getInfestacao().then((infestacaoMongo) => {
       socket.emit("infestacao", infestacaoMongo);
     });
     infestacaoWatchers.set(socket);
