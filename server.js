@@ -135,6 +135,30 @@ app.get("/meta", (req, res) => {
     else res.send(item);
   });
 });
+let isSetColor = false;
+app.get("/setColor/:idColor", (req, res) => {
+  let idColor = req.params.idColor;
+  if (idColor <= 6 && idColor>=0) {
+    getToken().then(token => {
+      if (!isSetColor) {
+        isSetColor = true;
+        let cor = colors[idColor];
+        console.log(`Change color: ${cor.name}`);
+        changeColor(cor, token);
+        res.send(`Change Color: ${cor.name}`);
+      } else {
+        isSetColor = false;
+        console.log(`Reset color`);
+        changeColor(nowColor, token);
+        res.send("Reset Color");
+      }
+    });
+  } else {
+    isSetColor = false;
+    res.send("Color not found");
+  }
+});
+
 let timerColor = null;
 app.get("/changeColor", (req, res) => {
   getToken().then(token => {
