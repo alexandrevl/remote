@@ -8,28 +8,29 @@ var privateKey = fs.readFileSync("privkey.pem", "utf8");
 var certificate = fs.readFileSync("fullchain.pem", "utf8");
 const socketIo = require("socket.io");
 const ioClient = require("socket.io-client");
+const axios = require("axios");
 
 const port = 21212;
 var whitelist = [
   "http://bot.mrguinas.com.br",
   "https://bot.mrguinas.com.br",
-  "http://localhost:3000",
+  "http://localhost:3000"
 ];
 var corsOptions = {
-  origin: function (origin, callback) {
+  origin: function(origin, callback) {
     if (whitelist.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
-  },
+  }
 };
 app.use(cors());
 app.use(express.json());
 
 var credentials = { key: privateKey, cert: certificate };
 
-const server = https.createServer(credentials, app).listen(port, function () {
+const server = https.createServer(credentials, app).listen(port, function() {
   console.log(`Server listening on port ${port}!`); // The server object listens on port 3000
 });
 
@@ -42,9 +43,9 @@ MongoClient.connect(
   url,
   {
     useNewUrlParser: true,
-    useUnifiedTopology: true,
+    useUnifiedTopology: true
   },
-  function (err, client) {
+  function(err, client) {
     if (err) {
       console.log(err);
     } else {
@@ -134,6 +135,133 @@ app.get("/meta", (req, res) => {
     else res.send(item);
   });
 });
+let timerColor = null;
+app.get("/changeColor", (req, res) => {
+  getToken().then(token => {
+    if (timerColor === null) {
+      timerColor = setInterval(async () => {
+        await changeColor(colors[getRandomInt(0, colors.length - 1)], token);
+      }, 500);
+      console.log("Bulb: started");
+      res.send("started");
+    } else {
+      clearInterval(timerColor);
+      timerColor = null;
+      setInterval(async () => {
+        await changeColor(nowColor, token);
+      }, 500);
+      console.log("Bulb: stoped");
+      res.send("stoped");
+    }
+  });
+});
+
+async function getToken() {
+  return new Promise(resolve => {
+    var settings = {
+      url: "https://wap.tplinkcloud.com/",
+      method: "POST",
+      timeout: 0,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      data: JSON.stringify({
+        method: "login",
+        params: {
+          appType: "Kasa_Android",
+          cloudUserName: "alexandrevl@gmail.com",
+          cloudPassword: "12345678",
+          terminalUUID: "377c4b28-cfad-439e-b885-7a749baab03b"
+        }
+      })
+    };
+    axios(settings).then(response => {
+      // console.log(response.data);
+      let tokenTpLink = response.data.result.token;
+      resolve(tokenTpLink);
+    });
+  });
+}
+let nowColor = {
+  name: "live",
+  hue: 0,
+  saturation: 0,
+  brightness: 0,
+  temp: 5000
+};
+
+var colors = [
+  {
+    name: "red",
+    hue: 0,
+    saturation: 100,
+    brightness: 80,
+    temp: 0
+  },
+  {
+    name: "blue",
+    hue: 240,
+    saturation: 100,
+    brightness: 80,
+    temp: 0
+  },
+  {
+    name: "green",
+    hue: 120,
+    saturation: 100,
+    brightness: 80,
+    temp: 0
+  },
+  {
+    name: "orange",
+    hue: 30,
+    saturation: 100,
+    brightness: 80,
+    temp: 0
+  },
+  {
+    name: "pink",
+    hue: 330,
+    saturation: 100,
+    brightness: 80,
+    temp: 0
+  },
+  {
+    name: "purple",
+    hue: 276,
+    saturation: 100,
+    brightness: 60,
+    temp: 0
+  }
+];
+//Sala
+let deviceId = "80120D52725F115812C58D0E677DA553187D9A56";
+//MrGuinas
+// let deviceId = "8012754D40A51DFD7DC639AEB17B346118AE7228";
+function changeColor(color, tokenTpLink) {
+  return new Promise(resolve => {
+    var settings = {
+      url: `https://use1-wap.tplinkcloud.com/?token=${tokenTpLink}`,
+      method: "POST",
+      timeout: 0,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      data: JSON.stringify({
+        method: "passthrough",
+        params: {
+          deviceId: deviceId,
+          requestData: `{"smartlife.iot.smartbulb.lightingservice":{"transition_light_state":{"ignore_default":1,"transition_period":150,"mode":"normal","hue":${color.hue},"on_off":1,"saturation":${color.saturation},"color_temp":${color.temp},"brightness":${color.brightness}}}}`
+        }
+      })
+    };
+
+    axios(settings).then(response => {
+      // console.log(response);
+      resolve(true);
+    });
+  });
+}
 
 function incRemote(msg) {
   mongoClient.collection("remote").insertOne(msg, (err, item) => {});
@@ -198,20 +326,20 @@ let infestacaoWatchers = new Map();
 let bombControler = new Map();
 let bombWatchers = new Map();
 let remoteWatchers = new Map();
-io.on("connection", async (socket) => {
+io.on("connection", async socket => {
   console.info(`Connected [id=${socket.id}]`);
-  socket.on("setInfestacao", (infestacao) => {
+  socket.on("setInfestacao", infestacao => {
     console.info(`SetInfestacao [id=${socket.id}]`);
     //console.log(bomb);
     infestacaoControler.set(socket, infestacao);
     writeInfestacao(infestacao);
     notifyInfestacao(infestacao);
   });
-  socket.on("addRemote", (msg) => {
+  socket.on("addRemote", msg => {
     console.info(`AddRemote [id=${socket.id}]`);
     notifyRemote(msg);
   });
-  socket.on("setBomb", (bomb) => {
+  socket.on("setBomb", bomb => {
     console.info(`SetBomb [id=${socket.id}]`);
     //console.log(bomb);
     bombControler.set(socket, bomb);
@@ -220,21 +348,21 @@ io.on("connection", async (socket) => {
   });
   socket.on("registerRemoteWatcher", () => {
     console.info(`Registered remoteWatcher [id=${socket.id}]`);
-    getRemote().then((list) => {
+    getRemote().then(list => {
       socket.emit("remoteMsg", list);
     });
     remoteWatchers.set(socket);
   });
-  socket.on("registerBombWatcher", (bomb) => {
+  socket.on("registerBombWatcher", bomb => {
     console.info(`Registered bombWatcher [id=${socket.id}]`);
-    getBomb().then((bombMongo) => {
+    getBomb().then(bombMongo => {
       socket.emit("bomb", bombMongo);
     });
     bombWatchers.set(socket);
   });
-  socket.on("registerInfestacaoWatcher", (infestacao) => {
+  socket.on("registerInfestacaoWatcher", infestacao => {
     console.info(`Registered infestacaoWatcher [id=${socket.id}]`);
-    getInfestacao().then((infestacaoMongo) => {
+    getInfestacao().then(infestacaoMongo => {
       socket.emit("infestacao", infestacaoMongo);
     });
     infestacaoWatchers.set(socket);
@@ -280,4 +408,15 @@ function disconnectClient(socket) {
   infestacaoWatchers.delete(socket);
   remoteWatchers.delete(socket);
   console.info(`DISCONNECTED [id=${socket.id}]`);
+}
+
+function getRandomInt(min, max) {
+  //console.log(min,max);
+  if (Math.ceil(min) == Math.floor(max)) {
+    return min;
+  } else {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 }
