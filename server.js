@@ -235,9 +235,9 @@ var colors = [
   }
 ];
 //Sala
-let deviceId = "80120D52725F115812C58D0E677DA553187D9A56";
+// let deviceId = "80120D52725F115812C58D0E677DA553187D9A56";
 //MrGuinas
-// let deviceId = "8012754D40A51DFD7DC639AEB17B346118AE7228";
+let deviceId = "8012754D40A51DFD7DC639AEB17B346118AE7228";
 function changeColor(color, tokenTpLink) {
   return new Promise(resolve => {
     var settings = {
