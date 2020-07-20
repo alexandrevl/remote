@@ -20,6 +20,8 @@
     "axios": "^0.19.2",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "googleapis": "^52.1.0",
+    "lodash": "^4.17.15",
     "mongo": "^0.1.0",
     "mongodb": "^3.5.5",
     "nodemon": "^2.0.3",

@@ -4,12 +4,22 @@ const MongoClient = require("mongodb").MongoClient;
 const app = express();
 var fs = require("fs");
 const cors = require("cors");
-var privateKey = fs.readFileSync("privkey.pem", "utf8");
-var certificate = fs.readFileSync("fullchain.pem", "utf8");
 const socketIo = require("socket.io");
 const ioClient = require("socket.io-client");
 const axios = require("axios");
 
+const privateKey = fs.readFileSync(
+  "/etc/letsencrypt/live/multistreamer.xyz/privkey.pem",
+  "utf8"
+);
+const certificate = fs.readFileSync(
+  "/etc/letsencrypt/live/multistreamer.xyz/cert.pem",
+  "utf8"
+);
+const ca = fs.readFileSync(
+  "/etc/letsencrypt/live/multistreamer.xyz/chain.pem",
+  "utf8"
+);
 const port = 21212;
 var whitelist = [
   "http://bot.mrguinas.com.br",
@@ -138,7 +148,7 @@ app.get("/meta", (req, res) => {
 let isSetColor = false;
 app.get("/setColor/:idColor", (req, res) => {
   let idColor = req.params.idColor;
-  if (idColor <= 6 && idColor>=0) {
+  if (idColor <= 6 && idColor >= 0) {
     getToken().then(token => {
       if (!isSetColor) {
         isSetColor = true;
