@@ -8,4 +8,5 @@ services:
     ports:
       - 21212:21212
     volumes:
-      - /etc/letsencrypt/live/multistreamer.xyz:/etc/letsencrypt/live/multistreamer.xyz
+      - .:/usr/src/app
+      - /etc/letsencrypt/:/etc/letsencrypt/
