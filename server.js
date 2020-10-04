@@ -89,10 +89,16 @@ app.get("/remote", (req, res) => {
 });
 
 app.post("/userDonnation", (req, res) => {
+  let liveId = req.body.liveId;
   col = mongoClient.collection("userDonnation");
-  col.insertOne(req.body, (err, item) => {
+  col.deleteMany({ liveId: { $ne: liveId } }, (err, item) => {
     if (err) res.sendStatus(400);
-    else res.json(req.body);
+    else {
+      col.insertOne(req.body, (err, item) => {
+        if (err) res.sendStatus(400);
+        else res.json(req.body);
+      });
+    }
   });
 });
 
@@ -110,6 +116,40 @@ app.delete("/userDonnation", (req, res) => {
     if (err) res.sendStatus(400);
     else res.json(req.body);
   });
+});
+
+app.get("/patrocinadores", (req, res) => {
+  col = mongoClient.collection("userDonnation");
+  col
+    .aggregate([
+      {
+        $group: {
+          _id: "$channelId",
+          name: { $first: "$name" },
+          avatar: { $first: "$avatar" },
+          amount: {
+            $sum: "$amount"
+          }
+        }
+      },
+      {
+        $sort: {
+          amount: -1
+        }
+      }
+    ])
+    .toArray((err, list) => {
+      if (err) res.sendStatus(400);
+      else {
+        let finalResult = [];
+        list.forEach(user => {
+          if (user.amount >= 100) {
+            finalResult.push(user);
+          }
+        });
+        res.send(finalResult);
+      }
+    });
 });
 
 app.put("/meta", (req, res) => {
