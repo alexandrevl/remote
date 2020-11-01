@@ -143,7 +143,7 @@ app.get("/patrocinadores", (req, res) => {
       else {
         let finalResult = [];
         list.forEach(user => {
-          if (user.amount >= 100) {
+          if (user.amount >= 50) {
             finalResult.push(user);
           }
         });

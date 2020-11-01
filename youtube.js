@@ -1,16 +1,17 @@
 var fs = require("fs");
-var _ = require("lodash");
 var readline = require("readline");
 var { google } = require("googleapis");
 var OAuth2 = google.auth.OAuth2;
 const axios = require("axios");
 
-let videoId = "EoqHqc39JdY";
+let videoId = "0cFuJWoXapc";
+
+//Video de teste
+// videoId = "5OTRxsvEUks";
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/youtube-nodejs-quickstart.json
 var SCOPES = [
-  "https://www.googleapis.com/auth/youtube",
   "https://www.googleapis.com/auth/youtube.channel-memberships.creator"
 ];
 var TOKEN_DIR =
@@ -20,14 +21,14 @@ var TOKEN_PATH = "./youtube-nodejs-quickstart.json";
 
 // Load client secrets from a local file.
 function start() {
-  console.log("Start update title");
+  console.log("List Members");
   fs.readFile("client.json", function processClientSecrets(err, content) {
     if (err) {
       console.log("Error loading client secret file: " + err);
       return;
     }
     // Authorize a client with the loaded credentials, then call the YouTube API.
-    authorize(JSON.parse(content), getStatsVideo);
+    authorize(JSON.parse(content), getMembers);
   });
 }
 
@@ -112,25 +113,16 @@ let qntLikes = 0;
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
-function getStatsVideo(auth) {
+function getMembers(auth) {
   var service = google.youtube("v3");
-  // var serviceAnalytics = google.youtubeAnalytics("v2");
-  // serviceAnalytics.reports.query({
-  //   endDate: "2020-05-31",
-  //   ids: "channel==MINE",
-  //   metrics: "subscribersGained,subscribersLost",
-  //   startDate: "2017-01-01"
-  // }, (err, response) => {
-  //   console.log(err)
-  //   console.log(response);
-  // });
-  console.log("Oi");
+
   service.members.list(
     {
       auth: auth,
-      part: "snippet"
+      part: "snippet",
+      mode: "all_current"
     },
-    function(err, response) {
+    async function(err, response) {
       if (err) {
         console.log("The API returned an error: " + err);
         return;
